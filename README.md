@@ -11,3 +11,4 @@ The converter will try to find the best icon stored in osmand that is the most s
 
 Proposition of mapping between gmap and osmand icons can be find in icons-gmap-osmand.pdf
 
+Project is based on https://www.mail-archive.com/osmand@googlegroups.com/msg07817.html
