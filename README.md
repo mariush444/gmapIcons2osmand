@@ -11,8 +11,7 @@ Proposition of mapping between gmap and osmand icons can be find in icons-gmap-o
 
 Project is based on https://www.mail-archive.com/osmand@googlegroups.com/msg07817.html
 
-PS
-
-Python 3 is needed.
-There are some icons for my needs only implemented for this moment.
-Let me know if you have suggestions and don't know how to do it.
+PS</br>
+Python 3 is needed.</br>
+There are some icons for my needs only implemented for this moment.</br>
+Let me know if you have suggestions and don't know how to do it.</br>
