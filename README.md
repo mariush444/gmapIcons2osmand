@@ -1,8 +1,8 @@
 # gmapIcons2osmand
 
-Convertion of KMZ file to gpx file for osmand but with icons (newer icons style).
+Convertion of KMZ file to gpx file for osmand but with icons (from newer google icons style to osmand icons).
 
-Generally osmand can import KMZ file but every icon is converted to star. Usually red or yellow.
+Generally osmand can import KMZ file but every icon is converted to red star.
 Osmand can't import gmail icons. It is not possible.
 
 The converter will try to find the best icon stored in osmand that is the most similar to gmap icon.
