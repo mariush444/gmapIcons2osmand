@@ -16,8 +16,3 @@ Python 3 is needed.</br>
 There are some icons for my needs only implemented for this moment.</br>
 Not implemented icons are presented as black icon in osmand to easier find what to do.</br>
 Let me know if you have suggestions and don't know how to do it.</br>
-
-
-PS</br>
-If you like it you can buy me a cup of coffee or glass of beer :)</br>
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/R6R6BYXLF)
