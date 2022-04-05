@@ -16,3 +16,6 @@ Python 3 is needed.</br>
 There are some icons for my needs only implemented for this moment.</br>
 Not implemented icons are presented as black icon in osmand to easier find what to do.</br>
 Let me know if you have suggestions and don't know how to do it.</br>
+
+
+If you like it you can buy me <a href="https://buy.stripe.com/5kA5nP7B27OQdFK7sv"> 🍷 </a> or <a href="https://buy.stripe.com/5kA6rTcVm8SUeJOeUW"> ☕ </a>
