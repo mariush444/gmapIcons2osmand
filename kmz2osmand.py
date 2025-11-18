@@ -57,6 +57,7 @@
 # Again, NO ERROR CHECKING is done for presence of input file, valid KML file structure, etc.
 #=======================modifications======================================
 # 01/07/2021 Mariusz444
+# https://github.com/mariush444?tab=repositories
 # works with python3
 # converting icons directly from KMZ instead of KML !!!!!! - new styles icon only
 # command is kmz2osmand.py file.kmz > new_file.gpx
