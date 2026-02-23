@@ -1,4 +1,11 @@
 # gmapIcons2osmand
+<div align="center">
+  
+![python](https://img.shields.io/badge/python-green?logo=python)
+![osmand](https://img.shields.io/badge/osmand%20layer-GPX-navy?logo=osmand)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
+</div>
 
 Convertion of KMZ file to gpx file for osmand but with icons (from newer google icons style to osmand icons).
 
