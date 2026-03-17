@@ -20,6 +20,8 @@ Example of result:
 
 Project is based on https://www.mail-archive.com/osmand@googlegroups.com/msg07817.html
 
+Current icons list https://mariush444.github.io/gmapIcons2osmand/icons-current.html
+
 PS</br>
 Python 3 is needed.</br>
 There are some icons for my needs only implemented for this moment.</br>
