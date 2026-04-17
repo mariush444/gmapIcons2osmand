@@ -20,7 +20,8 @@ Example of result:
 
 Project is based on https://www.mail-archive.com/osmand@googlegroups.com/msg07817.html
 
-Current icons list https://mariush444.github.io/gmapIcons2osmand/icons-current.html
+<!-- Current icons list https://mariush444.github.io/gmapIcons2osmand/icons-current.html -->
+<a href="https://mariush444.github.io/gmapIcons2osmand/kmz2osmand-online.html">Online converter</a>
 
 PS</br>
 Python 3 is needed.</br>
