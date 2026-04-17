@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>KMZ → GPX</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root {
+    --bg: #060a13;
+    --bg2: #0b1120;
+    --card: #0d1424;
+    --border: #1a2740;
+    --border-light: #243352;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --text-muted: #4a5e7a;
+    --accent: #00e5b0;
+    --accent-dim: rgba(0,229,176,0.08);
+    --accent-mid: rgba(0,229,176,0.25);
+    --success: #22c55e;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --info: #38bdf8;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --radius: 10px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+.bg-grid {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image: radial-gradient(circle, rgba(0,229,176,0.035) 1px, transparent 1px);
+    background-size: 28px 28px;
+}
+.bg-blob {
+    position: fixed; border-radius: 50%; filter: blur(120px); z-index: 0; pointer-events: none;
+}
+.bg-blob-1 {
+    width: 600px; height: 600px; top: -200px; left: -100px;
+    background: rgba(0,229,176,0.04);
+    animation: blobDrift 25s ease-in-out infinite alternate;
+}
+.bg-blob-2 {
+    width: 500px; height: 500px; bottom: -150px; right: -100px;
+    background: rgba(56,189,248,0.03);
+    animation: blobDrift 30s ease-in-out infinite alternate-reverse;
+}
+@keyframes blobDrift {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(60px, 40px) scale(1.1); }
+    100% { transform: translate(-30px, 70px) scale(0.95); }
+}
+.container {
+    position: relative; z-index: 1;
+    max-width: 1080px; margin: 0 auto;
+    padding: 48px 24px 80px;
+}
+header { margin-bottom: 36px; }
+.logo {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 8px;
+}
+.logo-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), #00b894);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: #060a13; flex-shrink: 0;
+    box-shadow: 0 0 24px rgba(0,229,176,0.2);
+}
+.logo-icon::before { content: "📌"; }
+.logo-text {
+    font-size: 28px; font-weight: 900; letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--text), var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.subtitle {
+    color: var(--text-muted); font-size: 15px; margin-left: 58px; margin-top: -4px;
+}
+.input-section {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 32px; margin-bottom: 32px;
+}
+.input-row {
+    display: flex; gap: 16px; align-items: center;
+}
+#fileInput {
+    flex: 1;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px 20px; transition: border-color 0.2s;
+    color: var(--text); font-family: var(--mono); font-size: 15px;
+}
+#fileInput:hover { border-color: var(--border-light); }
+#fileInput:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+    outline: none;
+}
+.convert-btn {
+    background: linear-gradient(135deg, var(--accent), #00b894);
+    color: #060a13; border: none; border-radius: 8px;
+    padding: 16px 32px; font-family: var(--sans); font-size: 16px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(0,229,176,0.3);
+}
+.convert-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0,229,176,0.4);
+}
+.convert-btn:active { transform: translateY(0); }
+.status {
+    margin-top: 20px; padding: 16px; border-radius: 8px;
+    font-family: var(--mono); font-size: 14px;
+    display: none;
+}
+.status.success { background: rgba(34,197,94,0.15); border: 1px solid var(--success); color: var(--success); }
+.status.error   { background: rgba(239,68,68,0.15);  border: 1px solid var(--danger);  color: var(--danger); }
+
+/* ── Preview section ── */
+.preview-section {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 32px; margin-bottom: 32px;
+    display: none;
+}
+.preview-section.visible { display: block; }
+
+.section-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 24px;
+    display: flex; align-items: center; gap: 10px;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.preview-table {
+    width: 100%; border-collapse: collapse;
+}
+.preview-table th {
+    text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--text-muted);
+    padding: 8px 16px; border-bottom: 1px solid var(--border);
+}
+.preview-table td {
+    padding: 10px 16px; border-bottom: 1px solid rgba(26,39,64,0.7);
+    vertical-align: middle;
+}
+.preview-table tbody tr:last-child td { border-bottom: none; }
+.preview-table tbody tr:hover td { background: var(--accent-dim); }
+
+.icon-cell {
+    display: flex; align-items: center; gap: 14px;
+}
+.icon-cell img {
+    width: 40px; height: 40px; flex-shrink: 0;
+    image-rendering: pixelated;
+}
+.icon-img-placeholder {
+    width: 40px; height: 40px; flex-shrink: 0;
+    background: var(--bg2); border: 1px dashed var(--border-light);
+    border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: var(--text-muted);
+}
+.icon-label {}
+.icon-name {
+    font-family: var(--mono); font-size: 13px; color: var(--text);
+}
+.icon-sub {
+    font-size: 11px; color: var(--text-muted); margin-top: 2px;
+    display: flex; align-items: center; gap: 6px;
+}
+.color-swatch {
+    display: inline-block; width: 10px; height: 10px;
+    border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);
+    vertical-align: middle; flex-shrink: 0;
+}
+
+.arrow-col {
+    text-align: center; color: var(--accent); font-size: 18px;
+    width: 44px; opacity: 0.7;
+}
+
+/* OsmAnd shaped icon backgrounds */
+.osmand-bg {
+    width: 40px; height: 40px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+}
+.osmand-bg.shape-circle  { border-radius: 50%; }
+.osmand-bg.shape-square  { border-radius: 5px; }
+.osmand-bg.shape-octagon {
+    clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%,
+                       70% 100%, 30% 100%, 0% 70%, 0% 30%);
+}
+.osmand-bg img {
+    width: 24px; height: 24px;
+}
+.osmand-bg .fallback-q {
+    font-size: 16px; color: rgba(255,255,255,0.7);
+}
+
+/* count badge */
+.count-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 20px; height: 20px; padding: 0 6px;
+    background: var(--accent-mid); color: var(--accent);
+    border-radius: 10px; font-size: 11px; font-weight: 700;
+    font-family: var(--mono); margin-left: 8px;
+}
+</style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-blob bg-blob-1"></div>
+    <div class="bg-blob bg-blob-2"></div>
+
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon"></div>
+                <div>
+                    <div class="logo-text">KMZ to GPX with Osmand's icons</div>
+                    <div class="subtitle">Strict OsmAnd-compatible converter</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="input-section">
+            <div class="input-row">
+                <input type="file" id="fileInput" accept=".kmz" onchange="loadPreview()">
+                <button class="convert-btn" onclick="convert()">Convert KMZ → GPX</button>
+            </div>
+            <div id="status" class="status"></div>
+        </div>
+
+        <!-- Preview section, shown after file is selected -->
+        <div class="preview-section" id="previewSection">
+            <div class="section-label" id="previewLabel">Icon conversion preview</div>
+            <table class="preview-table">
+                <thead>
+                    <tr>
+                        <th>Google Maps icon</th>
+                        <th class="arrow-col"></th>
+                        <th>OsmAnd icon</th>
+                        <th style="width:80px; text-align:right; padding-right:4px;">Used</th>
+                    </tr>
+                </thead>
+                <tbody id="previewBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+<script>
+const KMLCOLOR = "KMLCOLOR";
+const TrackTransparency = "ff";
+
+// ── OsmAnd icon dictionary (unchanged) ──────────────────────────────────────
+const iconDictionary = {
+"unknown":["special_symbol_question_mark","000001","octagon"],
+"503":["special_star","d00d0d","circle"],
+"1501":["special_bookmark","eecc22","circle"],
+"1502":["special_star","eecc22","circle"],
+"1504":["air_transport","10c0f0","circle"],
+"1507":["shop_pet","d00d0d","circle"],
+"1510":["amenity_atm","10c0f0","square"],
+"1525":["water_transport","a71de1","octagon"],
+"1528":["bridge_structure_arch","d00d0d","circle"],
+"1535":["special_photo_camera","eecc22","circle"],
+"1538":["special_wagon","a71de1","square"],
+"1539":["shop_car_repair","a71de1","circle"],
+"1541":["special_symbol_exclamation_mark","ff0000","octagon"],
+"1546":["place_city","d00d0d","circle"],
+"1564":["special_symbol_exclamation_mark","ff0000","octagon"],
+"1574":["special_flag_stroke","eecc22","circle"],
+"1577":["restaurants","10c0f0","square"],
+"1578":["shop_supermarket","10c0f0","circle"],
+"1581":["fuel","a71de1","circle"],
+"1596":["special_trekking","eecc22","circle"],
+"1598":["historic_castle","d00d0d","circle"],
+"1602":["tourism_hotel","1010a0","circle"],
+"1603":["special_house","d00d0d","circle"],
+"1608":["tourism_information","10c0f0","square"],
+"1624":["amenity_hospital","d00d0d","circle"],
+"1636":["tourism_museum","eecc22","circle"],
+"1644":["parking","a71de1","circle"],
+"1650":["tourism_picnic_site","eecc22","circle"],
+"1655":["amenity_police","1010a0","circle"],
+"1657":["amenity_police","1010a0","circle"],
+"1670":["religion_christian","d00d0d","circle"],
+"1673":["religion_muslim","d00d0d","circle"],
+"1685":["shop_supermarket","10c0f0","square"],
+"1703":["amenity_drinking_water","10c0f0","square"],
+"1710":["special_arrow_up_and_down","10c0f0","circle"],
+"1723":["tourism_viewpoint","d90000","octagon"],
+"1729":["tourism_viewpoint","d00d0d","circle"],
+"1733":["amenity_toilets","10c0f0","circle"],
+"1739":["special_symbol_plus","1010a0","circle"],
+"1765":["tourism_camp_site","1010a0","circle"],
+"1767":["natural_cave_entrance","d00d0d","circle"],
+"1803":["special_arrow_right_arrow_left","d00d0d","circle"],
+"1879":["amenity_biergarten","10c0f0","circle"],
+"1892":["waterfall","d00d0d","circle"],
+"1899":["special_star",KMLCOLOR,"circle"]
+};
+
+// ── Google Maps icon names (icon-id → slug used in the mt.google.com URL) ──
+// Two special cases handled separately: 1739 (measle) and 1899 (pin)
+const googleIconNames = {
+"503":  "star",
+"1501": "bookmark",
+"1502": "star",
+"1504": "airports",
+"1507": "paw",
+"1510": "atm",
+"1525": "ferry",
+"1528": "bridge",
+"1535": "camera",
+"1538": "shopping-cart",
+"1539": "car-repair",
+"1541": "caution",
+"1546": "city",
+"1564": "caution",
+"1574": "flag",
+"1577": "restaurant",
+"1578": "grocery",
+"1581": "gas-station",
+"1596": "hiker",
+"1598": "castle",
+"1602": "lodging",
+"1603": "home",
+"1608": "info",
+"1624": "hospitals",
+"1636": "museum",
+"1644": "parking-lot",
+"1650": "picnic",
+"1655": "police",
+"1657": "post-office",
+"1670": "church",
+"1673": "mosque",
+"1685": "shopping-bag",
+"1703": "water",
+"1710": "elevator",
+"1723": "mountains",
+"1729": "mountains",
+"1733": "toilet",
+"1739": "blank-measle",   // special — measle container
+"1765": "camping",
+"1767": "cave",
+"1803": "arrows",
+"1879": "bar",
+"1892": "waterfall",
+"1899": "blank-shape_pin" // special — pin container
+};
+
+// Build OsmAnd raw-GitHub PNG URL
+function osmandIconUrl(iconName) {
+    // return `https://raw.githubusercontent.com/osmandapp/OsmAnd-resources/master/rendering_styles/style-icons/poi-icons-png/drawable-hdpi/mx_${iconName}.png`;
+    return `https://raw.githubusercontent.com/osmandapp/OsmAnd-resources/master/rendering_styles/style-icons/poi-icons-svg/mx_${iconName}.svg`;
+}
+
+// ── Preview loader ───────────────────────────────────────────────────────────
+// Revoked on next load to avoid memory leaks
+let _blobUrls = [];
+
+async function loadPreview() {
+    const file    = document.getElementById("fileInput").files[0];
+    const section = document.getElementById("previewSection");
+    const body    = document.getElementById("previewBody");
+    const label   = document.getElementById("previewLabel");
+
+    section.classList.remove("visible");
+    body.innerHTML = "";
+    _blobUrls.forEach(URL.revokeObjectURL, URL);
+    _blobUrls = [];
+
+    if (!file) return;
+
+    try {
+        const zip     = await JSZip.loadAsync(file);
+        const kmlText = await zip.file("doc.kml").async("text");
+        const xml     = new DOMParser().parseFromString(kmlText, "text/xml");
+
+        // ── Extract embedded icon images from the KMZ as blob URLs ───────────
+        // KMZ stores rendered colored icons in images/icon-N.png — use those
+        // directly instead of trying to reconstruct Google's CDN URL format.
+        const imageBlobs = {};
+        for (const [path, entry] of Object.entries(zip.files)) {
+            if (!entry.dir && /^images\/.+\.(png|jpg|gif)$/i.test(path)) {
+                const blob = await entry.async("blob");
+                const url  = URL.createObjectURL(blob);
+                imageBlobs[path] = url;
+                _blobUrls.push(url);
+            }
+        }
+
+        // ── Build Style id → icon href lookup ────────────────────────────────
+        const styleHref = {}; // style-id → "images/icon-N.png"
+        xml.querySelectorAll("Style").forEach(s => {
+            const id   = s.getAttribute("id");
+            const href = s.querySelector("IconStyle > Icon > href")?.textContent?.trim();
+            if (id && href) styleHref[id] = href;
+        });
+
+        // ── Build StyleMap id → normal Style id ──────────────────────────────
+        const smNormal = {}; // styleMap-id → style-id
+        xml.querySelectorAll("StyleMap").forEach(sm => {
+            const id = sm.getAttribute("id");
+            sm.querySelectorAll("Pair").forEach(pair => {
+                if (pair.querySelector("key")?.textContent === "normal") {
+                    const url = pair.querySelector("styleUrl")?.textContent?.replace(/^#/, "");
+                    if (url) smNormal[id] = url;
+                }
+            });
+        });
+
+        // ── Collect unique styles used by waypoint Placemarks ────────────────
+        const styleMap = new Map(); // "iconId|kmlColor" → { iconId, kmlColor, href, count }
+
+        xml.querySelectorAll("Placemark").forEach(pm => {
+            if (pm.querySelector("LineString")) return; // skip tracks
+
+            const styleUrl = (pm.querySelector("styleUrl")?.textContent || "").replace(/^#/, "");
+            const parts    = styleUrl.split("-");
+            if (parts.length < 3 || parts[0] !== "icon") return;
+
+            const iconId   = parts[1];
+            const kmlColor = parts[2];
+            const key      = `${iconId}|${kmlColor}`;
+
+            if (styleMap.has(key)) {
+                styleMap.get(key).count++;
+            } else {
+                // Resolve the embedded image: styleUrl is a StyleMap id → lookup normal style
+                const normalId = smNormal[styleUrl];
+                const href     = (normalId && styleHref[normalId])
+                                 || styleHref[styleUrl]
+                                 || null;
+                styleMap.set(key, { iconId, kmlColor, href, count: 1 });
+            }
+        });
+
+        if (styleMap.size === 0) {
+            section.classList.add("visible");
+            label.innerHTML = `Icon conversion preview <span style="color:var(--text-muted);font-size:12px;">(no waypoints found)</span>`;
+            return;
+        }
+
+        const sorted = [...styleMap.values()].sort((a, b) => a.iconId.localeCompare(b.iconId, undefined, {numeric: true}));
+        for (const entry of sorted) {
+            body.appendChild(buildRow(entry, imageBlobs));
+        }
+        /*
+        for (const entry of styleMap.values()) {
+            body.appendChild(buildRow(entry, imageBlobs));
+        }
+        */
+        const total = [...styleMap.values()].reduce((s, v) => s + v.count, 0);
+        label.innerHTML = `Icon conversion preview <span class="count-badge">${styleMap.size} style${styleMap.size > 1 ? "s" : ""} · ${total} waypoint${total > 1 ? "s" : ""}</span>`;
+        section.classList.add("visible");
+
+    } catch(e) {
+        console.error("Preview error:", e);
+    }
+}
+
+function buildRow({ iconId, kmlColor, href, count }, imageBlobs) {
+    const tr = document.createElement("tr");
+
+    // ── OsmAnd mapping ───────────────────────────────────────────────────────
+    const dictKey  = iconDictionary[iconId] ? iconId : "unknown";
+    const osmEntry = iconDictionary[dictKey];
+    const osmName  = osmEntry[0];
+    const osmShape = osmEntry[2];
+    const osmColor = osmEntry[1] === KMLCOLOR ? kmlColor : osmEntry[1];
+
+    // ── Google icon: use blob extracted from KMZ, not a remote URL ───────────
+    const blobUrl   = href ? imageBlobs[href] : null;
+    const gImgHtml  = blobUrl
+        ? `<img src="${blobUrl}" width="40" height="40" style="image-rendering:auto;">`
+        : `<div class="icon-img-placeholder">?</div>`;
+    // icon name from our dictionary (informational only)
+    const gName = googleIconNames[iconId] || `id ${iconId}`;
+
+    const googleCell = `
+        <td>
+          <div class="icon-cell">
+            ${gImgHtml}
+            <div class="icon-label">
+              <div class="icon-name">${gName}</div>
+              <div class="icon-sub">
+                <span class="color-swatch" style="background:#${kmlColor};"></span>
+                <span>#${kmlColor}</span>
+                <span style="color:var(--border-light);">·</span>
+                <span>id ${iconId}</span>
+              </div>
+            </div>
+          </div>
+        </td>`;
+
+    const arrowCell = `<td class="arrow-col">→</td>`;
+
+    // ── OsmAnd icon: white PNG on colored shaped background ──────────────────
+    const osmUrl    = osmandIconUrl(osmName);
+    const osmandCell = `
+        <td>
+          <div class="icon-cell">
+            <div class="osmand-bg shape-${osmShape}" style="background:#${osmColor};">
+              <img src="${osmUrl}"
+                   onerror="this.outerHTML='<span class=fallback-q>?</span>'"
+                   width="24" height="24">
+            </div>
+            <div class="icon-label">
+              <div class="icon-name">${osmName}</div>
+              <div class="icon-sub">
+                <span class="color-swatch" style="background:#${osmColor};"></span>
+                <span>#${osmColor}</span>
+                <span style="color:var(--border-light);">·</span>
+                <span>${osmShape}</span>
+              </div>
+            </div>
+          </div>
+        </td>`;
+
+    const countCell = `
+        <td style="text-align:right; padding-right:16px;">
+          <span class="count-badge">${count}</span>
+        </td>`;
+
+    tr.innerHTML = googleCell + arrowCell + osmandCell + countCell;
+    return tr;
+}
+
+// ── Utilities ────────────────────────────────────────────────────────────────
+function html_escape(text){
+    return text.replace(/[&"'<>]/g, c => ({
+        "&":"&amp;",'"':"&quot;","'":"&apos;",">":"&gt;","<":"&lt;"
+    })[c]);
+}
+
+function showStatus(message, type = 'success') {
+    const status = document.getElementById('status');
+    status.textContent = message;
+    status.className = `status ${type}`;
+    status.style.display = 'block';
+    setTimeout(() => { status.style.display = 'none'; }, 5000);
+}
+
+// ── Converter (unchanged logic) ──────────────────────────────────────────────
+async function convert(){
+    const status = document.getElementById('status');
+    status.style.display = 'none';
+
+    const file = document.getElementById("fileInput").files[0];
+    if(!file) {
+        showStatus("Please select a KMZ file first.", "error");
+        return;
+    }
+
+    try {
+        const fileName = file.name.slice(0, -4);
+        status.textContent = "Converting...";
+        status.className = "status";
+        status.style.display = 'block';
+
+        const zip = await JSZip.loadAsync(file);
+        const kmlText = await zip.file("doc.kml").async("text");
+        const xml = new DOMParser().parseFromString(kmlText,"text/xml");
+
+        let out = `<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<gpx version="1.1" creator="OsmAnd+ 3.9.10"
+xmlns="http://www.topografix.com/GPX/1/1"
+xmlns:osmand="https://osmand.net">\n`;
+
+        const docName = xml.querySelector("Document > name");
+        if(docName){
+out += "<metadata>\n";
+out += "\t<name>"+html_escape(docName.textContent)+"</name>\n";
+out += "</metadata>\n";
+        }
+
+        xml.querySelectorAll("Placemark").forEach(pm=>{
+let name = html_escape(pm.querySelector("name")?.textContent.trim() || "");
+let desc = html_escape((pm.querySelector("description")?.innerHTML || "").replace(/<br>/g,"\r\n"));
+            let style = pm.querySelector("styleUrl")?.textContent || "";
+            let coordsRaw = pm.querySelector("coordinates")?.textContent || "";
+
+let coords = coordsRaw.trim().replace(/ /g,"").replace(/\n/g,",").split(",");
+
+            if(pm.querySelector("LineString")){
+out += "<trk>\n";
+out += "\t<name>"+name+"</name>\n";
+if(desc) out += "\t<desc>"+desc+"</desc>\n";
+out += "\t<trkseg>\n";
+
+                for(let i=0;i<coords.length;i+=3){
+out += `\t\t<trkpt lat="${coords[i+1]}" lon="${coords[i]}"/>\n`;
+                }
+
+out += "\t</trkseg>\n";
+
+                let styleParts = style.split("-");
+                let styleWidth = parseFloat(styleParts[2])/1000;
+                let styleColor = styleParts[1];
+
+out += "\t<extensions>\n";
+out += `\t\t<osmand:color>#${TrackTransparency}${styleColor}</osmand:color>\n`;
+out += `\t\t<width>${styleWidth}</width>\n`;
+out += "\t\t<opacity>1</opacity>\n";
+out += "\t</extensions>\n";
+out += "</trk>\n";
+
+            } else {
+
+out += `<wpt lat="${coords[1]}" lon="${coords[0]}">\n`;
+out += "\t<name>"+name+"</name>\n";
+if(desc) out += "\t<desc>"+desc+"</desc>\n";
+
+                let styleParts = style.split("-");
+                let styleIcon = styleParts[1];
+                let styleColor = styleParts[2];
+
+                if(!iconDictionary[styleIcon]) styleIcon="unknown";
+
+                let chosenColor =
+                    (iconDictionary[styleIcon][1]===KMLCOLOR)
+                    ? styleColor
+                    : iconDictionary[styleIcon][1];
+
+out += "\t<extensions>\n";
+out += `\t\t<osmand:color>#${chosenColor}</osmand:color>\n`;
+out += `\t\t<osmand:icon>${iconDictionary[styleIcon][0]}</osmand:icon>\n`;
+out += `\t\t<osmand:background>${iconDictionary[styleIcon][2]}</osmand:background>\n`;
+out += "\t</extensions>\n";
+
+out += "</wpt>\n";
+            }
+        });
+
+        out += "</gpx>";
+
+        download(fileName+".gpx", out);
+        showStatus(`✓ Converted ${file.name} → ${fileName}.gpx`, "success");
+
+    } catch (error) {
+        console.error(error);
+        showStatus("Error: " + error.message, "error");
+    }
+}
+
+function download(name, text){
+    const blob = new Blob([text], {type:"application/gpx+xml"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+</script>
+</body>
+</html>
