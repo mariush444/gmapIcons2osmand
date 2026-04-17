@@ -7,7 +7,7 @@
     <style>
         :root {
             --bg-color: #f4f6f8;
-            --card-bg: #e5e5e5;
+            --card-bg: #bbbbbb;
             --text-color: #333;
             --border-color: #e1e4e8;
             --accent-color: #2ea44f;
@@ -139,7 +139,8 @@
 <script>
     // Configuration
     const API_URL = "https://api.github.com/repos/osmandapp/OsmAnd-resources/git/trees/master?recursive=1";
-    const TARGET_FOLDER = "rendering_styles/style-icons/poi-icons-png/drawable-hdpi/";
+    // const TARGET_FOLDER = "rendering_styles/style-icons/poi-icons-png/drawable-hdpi/";
+    const TARGET_FOLDER = "rendering_styles/style-icons/poi-icons-svg/";
     const RAW_BASE_URL = "https://raw.githubusercontent.com/osmandapp/OsmAnd-resources/master/";
 
     const statusDiv = document.getElementById('status');
@@ -171,7 +172,7 @@
                 if (item.type === "blob" && item.path.startsWith(TARGET_FOLDER)) {
                     let filename = item.path.replace(TARGET_FOLDER, "");
 
-                    if (filename.endsWith(".png")) {
+                    if (filename.endsWith(".svg")) {
 
                         // --- NAME CLEANUP LOGIC ---
                         // 1. Remove .png extension
