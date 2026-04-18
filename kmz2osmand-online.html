@@ -63,23 +63,30 @@ body {
     padding: 48px 24px 80px;
 }
 header { margin-bottom: 36px; }
-.logo {
-    display: flex; align-items: center; gap: 14px; margin-bottom: 8px;
-}
-.logo-icon {
-    width: 44px; height: 44px; border-radius: 12px;
-    background: linear-gradient(135deg, var(--accent), #00b894);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px; color: #060a13; flex-shrink: 0;
-    box-shadow: 0 0 24px rgba(0,229,176,0.2);
-}
-.logo-icon::before { content: "📌"; }
-.logo-text {
-    font-size: 28px; font-weight: 900; letter-spacing: -0.5px;
-    background: linear-gradient(135deg, var(--text), var(--accent));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
+        .logo { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+        .logo-icon {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent), #00b894);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: #060a13; flex-shrink: 0;
+            box-shadow: 0 0 24px rgba(0,229,176,0.2);
+        }
+        .logo-text {
+            font-size: 28px; font-weight: 900; letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--text), var(--accent));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .logo-icon a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+        .logo-icon img {
+            display: block; /* removes inline baseline weirdness */
+        }
 .subtitle {
     color: var(--text-muted); font-size: 15px; margin-left: 58px; margin-top: -4px;
 }
@@ -203,6 +210,146 @@ header { margin-bottom: 36px; }
     font-size: 16px; color: rgba(255,255,255,0.7);
 }
 
+/* ── OsmAnd editable cell ── */
+.osm-edit-wrap {
+    display: flex; align-items: flex-start; gap: 14px;
+}
+.osm-controls {
+    display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0;
+}
+.osm-name-row {
+    display: flex; gap: 6px; align-items: center;
+}
+.osm-name-input {
+    flex: 1; min-width: 0;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 5px 9px;
+    color: var(--text); font-family: var(--mono); font-size: 12px;
+    transition: border-color 0.15s;
+}
+.osm-name-input:focus { border-color: var(--accent); outline: none; }
+.osm-color-row {
+    display: flex; gap: 6px; align-items: center;
+}
+.osm-colorpicker {
+    width: 32px; height: 28px; padding: 2px 3px;
+    border: 1px solid var(--border); border-radius: 6px;
+    background: var(--bg2); cursor: pointer; flex-shrink: 0;
+}
+.osm-colorpicker::-webkit-color-swatch-wrapper { padding: 0; }
+.osm-colorpicker::-webkit-color-swatch { border: none; border-radius: 3px; }
+.osm-hex-input {
+    width: 80px;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 5px 9px;
+    color: var(--text); font-family: var(--mono); font-size: 12px;
+    transition: border-color 0.15s;
+}
+.osm-hex-input:focus { border-color: var(--accent); outline: none; }
+.osm-hex-input.invalid { border-color: var(--danger); }
+.osm-shape-row {
+    display: flex; gap: 4px;
+}
+.osm-shape-btn {
+    padding: 3px 9px; font-size: 11px; font-weight: 600;
+    border: 1px solid var(--border); border-radius: 5px;
+    background: var(--bg2); color: var(--text-muted);
+    cursor: pointer; transition: all 0.15s; font-family: var(--sans);
+}
+.osm-shape-btn:hover { border-color: var(--border-light); color: var(--text-dim); }
+.osm-shape-btn.active {
+    background: var(--accent-dim); border-color: var(--accent);
+    color: var(--accent);
+}
+.osm-reset-btn {
+    padding: 4px 8px; font-size: 13px; line-height: 1;
+    border: 1px solid var(--border); border-radius: 6px;
+    background: var(--bg2); color: var(--text-muted);
+    cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+}
+.osm-reset-btn:hover { border-color: var(--warning); color: var(--warning); }
+
+/* clickable preview bubble */
+.osmand-bg.pickable { cursor: pointer; }
+.osmand-bg.pickable:hover { filter: brightness(1.25); }
+
+/* browse button */
+.osm-browse-btn {
+    padding: 4px 8px; font-size: 13px; line-height: 1;
+    border: 1px solid var(--border); border-radius: 6px;
+    background: var(--bg2); color: var(--text-muted);
+    cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+}
+.osm-browse-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── Icon picker modal ── */
+.ip-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+}
+.ip-overlay.open { display: flex; }
+.ip-modal {
+    background: var(--card); border: 1px solid var(--border-light);
+    border-radius: 14px; width: min(820px, 95vw);
+    max-height: 80vh; display: flex; flex-direction: column;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    overflow: hidden;
+}
+.ip-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 18px 20px; border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.ip-title {
+    font-size: 14px; font-weight: 700; color: var(--text-dim);
+    white-space: nowrap;
+}
+.ip-search {
+    flex: 1; background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 7px; padding: 7px 12px;
+    color: var(--text); font-family: var(--mono); font-size: 13px;
+}
+.ip-search:focus { border-color: var(--accent); outline: none; }
+.ip-close {
+    background: none; border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text-muted); padding: 4px 9px; cursor: pointer; font-size: 14px;
+    flex-shrink: 0;
+}
+.ip-close:hover { border-color: var(--danger); color: var(--danger); }
+.ip-status {
+    padding: 24px; text-align: center;
+    color: var(--text-muted); font-size: 13px; font-family: var(--mono);
+}
+.ip-status:empty { display: none; }
+.ip-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+    gap: 4px; padding: 12px; overflow-y: auto; flex: 1;
+}
+.ip-card {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 5px; padding: 8px 4px; border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer; transition: all 0.12s; text-align: center;
+    background: var(--bg2);
+}
+.ip-card:hover { border-color: var(--border-light); background: var(--bg); }
+.ip-card.selected { border-color: var(--accent); background: var(--accent-dim); }
+.ip-card img {
+    width: 32px; height: 32px; object-fit: contain;
+}
+.ip-card span {
+    font-family: var(--mono); font-size: 9px; color: var(--text-muted);
+    word-break: break-all; line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+}
+.ip-card.selected span { color: var(--accent); }
+
+/* mark overridden rows */
+tr.overridden td { background: rgba(0,229,176,0.04); }
+
 /* count badge */
 .count-badge {
     display: inline-flex; align-items: center; justify-content: center;
@@ -221,7 +368,11 @@ header { margin-bottom: 36px; }
     <div class="container">
         <header>
             <div class="logo">
-                <div class="logo-icon"></div>
+                <div class="logo-icon">
+                <a href="https://mariush444.github.io/Osmand-tools/">
+                <img src="https://avatars.githubusercontent.com/u/66887280?v=4&size=64" alt="Main Page" style="width:30px;height:30px;"></a>
+                </div>
+                <!-- div class="logo-icon"></div -->
                 <div>
                     <div class="logo-text">KMZ to GPX with Osmand's icons</div>
                     <div class="subtitle">Strict OsmAnd-compatible converter</div>
@@ -307,6 +458,20 @@ const iconDictionary = {
 "1899":["special_star",KMLCOLOR,"circle"]
 };
 
+// ── Per-row user overrides: key "iconId|kmlColor" → {name, color, shape} ────
+const userOverrides = {};
+
+function getDefaultOsmand(iconId, kmlColor) {
+    const dictKey = iconDictionary[iconId] ? iconId : "unknown";
+    const e = iconDictionary[dictKey];
+    return { name: e[0], color: e[1] === KMLCOLOR ? kmlColor : e[1], shape: e[2] };
+}
+
+function getOsmand(iconId, kmlColor) {
+    const key = `${iconId}|${kmlColor}`;
+    return userOverrides[key] || getDefaultOsmand(iconId, kmlColor);
+}
+
 // ── Google Maps icon names (icon-id → slug used in the mt.google.com URL) ──
 // Two special cases handled separately: 1739 (measle) and 1899 (pin)
 const googleIconNames = {
@@ -358,7 +523,7 @@ const googleIconNames = {
 
 // Build OsmAnd raw-GitHub PNG URL
 function osmandIconUrl(iconName) {
-    // return `https://raw.githubusercontent.com/osmandapp/OsmAnd-resources/master/rendering_styles/style-icons/poi-icons-png/drawable-hdpi/mx_${iconName}.png`;
+    // SVG = white icon, correct for display on colored background (as OsmAnd shows it)
     return `https://raw.githubusercontent.com/osmandapp/OsmAnd-resources/master/rendering_styles/style-icons/poi-icons-svg/mx_${iconName}.svg`;
 }
 
@@ -464,73 +629,323 @@ async function loadPreview() {
 
     } catch(e) {
         console.error("Preview error:", e);
+        const isZipError = e.message?.includes("central directory") || e.message?.includes("zip");
+        section.classList.add("visible");
+        label.innerHTML = `Icon conversion preview`;
+        body.innerHTML = `<tr><td colspan="4" style="padding:20px; color:var(--danger); font-family:var(--mono); font-size:13px;">
+            ✗ ${isZipError ? "Not a valid KMZ file (must be a ZIP-based .kmz)" : e.message}
+        </td></tr>`;
     }
 }
 
+// ── Icon picker ──────────────────────────────────────────────────────────────
+const IP_API    = "https://api.github.com/repos/osmandapp/OsmAnd-resources/git/trees/master?recursive=1";
+const IP_FOLDER = "rendering_styles/style-icons/poi-icons-png/drawable-hdpi/";
+const IP_RAW    = "https://raw.githubusercontent.com/osmandapp/OsmAnd-resources/master/";
+
+let _ipCache    = null;   // [{name, url}] fetched once
+let _ipCards    = null;   // [{name, card}] DOM nodes created once, reused forever
+let _ipCallback = null;
+let _ipCurrent  = null;
+
+async function fetchIconList() {
+    if (_ipCache) return _ipCache;
+    const r = await fetch(IP_API, { headers:{ Accept:"application/vnd.github+json" } });
+    if (!r.ok) throw new Error(`GitHub API ${r.status}`);
+    const { tree } = await r.json();
+    _ipCache = tree
+        .filter(i => i.type === "blob" && i.path.startsWith(IP_FOLDER) && i.path.endsWith(".png"))
+        .map(i => {
+            let name = i.path.slice(IP_FOLDER.length).replace(/\.png$/, "");
+            if (name.startsWith("mx_")) name = name.slice(3);
+            return { name, url: IP_RAW + i.path };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name));
+    return _ipCache;
+}
+
+function buildPickerCards(icons) {
+    // Called once — creates all card DOM nodes and stores them
+    _ipCards = icons.map(({ name, url }) => {
+        const card = document.createElement("div");
+        card.className = "ip-card";
+        card.title = name;
+        const img = document.createElement("img");
+        img.src = url; img.alt = name; img.loading = "lazy";
+        const lbl = document.createElement("span");
+        lbl.textContent = name;
+        card.appendChild(img);
+        card.appendChild(lbl);
+        card.addEventListener("click", () => {
+            _ipCallback && _ipCallback(name);
+            closeIconPicker();
+        });
+        return { name, card };
+    });
+    // Append all to grid once
+    const grid = document.getElementById("iconPickerGrid");
+    _ipCards.forEach(({ card }) => grid.appendChild(card));
+}
+
+function filterPickerCards(term) {
+    // Just toggle visibility — no DOM create/destroy
+    _ipCards.forEach(({ name, card }) => {
+        card.style.display = (!term || name.includes(term)) ? "" : "none";
+    });
+}
+
+async function openIconPicker(currentName, callback) {
+    _ipCallback = callback;
+    _ipCurrent  = currentName;
+    const overlay = document.getElementById("iconPickerOverlay");
+    const status  = document.getElementById("iconPickerStatus");
+    const search  = document.getElementById("iconPickerSearch");
+    search.value  = "";
+    search.oninput = () => filterPickerCards(search.value.toLowerCase());
+    overlay.classList.add("open");
+
+    if (_ipCards) {
+        // Cards already built — just reset filter and highlight current
+        status.textContent = "";
+        filterPickerCards("");
+        _ipCards.forEach(({ name, card }) =>
+            card.classList.toggle("selected", name === currentName));
+        search.focus();
+        setTimeout(() => {
+            document.querySelector(".ip-card.selected")?.scrollIntoView({ block: "center" });
+        }, 50);
+        return;
+    }
+
+    status.textContent = "Loading icons…";
+    try {
+        const icons = await fetchIconList();
+        status.textContent = "";
+        buildPickerCards(icons);
+        _ipCards.forEach(({ name, card }) =>
+            card.classList.toggle("selected", name === currentName));
+        search.focus();
+        setTimeout(() => {
+            document.querySelector(".ip-card.selected")?.scrollIntoView({ block: "center" });
+        }, 50);
+    } catch(e) {
+        status.textContent = "Error: " + e.message;
+    }
+}
+
+function closeIconPicker() {
+    document.getElementById("iconPickerOverlay").classList.remove("open");
+    _ipCallback = null;
+}
+
+// Close on Escape
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeIconPicker(); });
+
+// ── buildRow ─────────────────────────────────────────────────────────────────
 function buildRow({ iconId, kmlColor, href, count }, imageBlobs) {
-    const tr = document.createElement("tr");
+    const key    = `${iconId}|${kmlColor}`;
+    const safeId = `${iconId}-${kmlColor}`;
+    const tr     = document.createElement("tr");
+    tr.dataset.key = key;
 
-    // ── OsmAnd mapping ───────────────────────────────────────────────────────
-    const dictKey  = iconDictionary[iconId] ? iconId : "unknown";
-    const osmEntry = iconDictionary[dictKey];
-    const osmName  = osmEntry[0];
-    const osmShape = osmEntry[2];
-    const osmColor = osmEntry[1] === KMLCOLOR ? kmlColor : osmEntry[1];
+    // ── Current values (override or default) ─────────────────────────────────
+    const osm = getOsmand(iconId, kmlColor);
 
-    // ── Google icon: use blob extracted from KMZ, not a remote URL ───────────
-    const blobUrl   = href ? imageBlobs[href] : null;
-    const gImgHtml  = blobUrl
+    // ── Google cell ───────────────────────────────────────────────────────────
+    const blobUrl  = href ? imageBlobs[href] : null;
+    const gImgHtml = blobUrl
         ? `<img src="${blobUrl}" width="40" height="40" style="image-rendering:auto;">`
         : `<div class="icon-img-placeholder">?</div>`;
-    // icon name from our dictionary (informational only)
     const gName = googleIconNames[iconId] || `id ${iconId}`;
 
-    const googleCell = `
-        <td>
-          <div class="icon-cell">
-            ${gImgHtml}
-            <div class="icon-label">
-              <div class="icon-name">${gName}</div>
-              <div class="icon-sub">
-                <span class="color-swatch" style="background:#${kmlColor};"></span>
-                <span>#${kmlColor}</span>
-                <span style="color:var(--border-light);">·</span>
-                <span>id ${iconId}</span>
-              </div>
+    const tdGoogle = document.createElement("td");
+    tdGoogle.innerHTML = `
+        <div class="icon-cell">
+          ${gImgHtml}
+          <div class="icon-label">
+            <div class="icon-name">${gName}</div>
+            <div class="icon-sub">
+              <span class="color-swatch" style="background:#${kmlColor};"></span>
+              <span>#${kmlColor}</span>
+              <span style="color:var(--border-light);">·</span>
+              <span>id ${iconId}</span>
             </div>
           </div>
-        </td>`;
+        </div>`;
+    tr.appendChild(tdGoogle);
 
-    const arrowCell = `<td class="arrow-col">→</td>`;
+    // ── Arrow cell ────────────────────────────────────────────────────────────
+    const tdArrow = document.createElement("td");
+    tdArrow.className = "arrow-col";
+    tdArrow.textContent = "→";
+    tr.appendChild(tdArrow);
 
-    // ── OsmAnd icon: white PNG on colored shaped background ──────────────────
-    const osmUrl    = osmandIconUrl(osmName);
-    const osmandCell = `
-        <td>
-          <div class="icon-cell">
-            <div class="osmand-bg shape-${osmShape}" style="background:#${osmColor};">
-              <img src="${osmUrl}"
-                   onerror="this.outerHTML='<span class=fallback-q>?</span>'"
-                   width="24" height="24">
-            </div>
-            <div class="icon-label">
-              <div class="icon-name">${osmName}</div>
-              <div class="icon-sub">
-                <span class="color-swatch" style="background:#${osmColor};"></span>
-                <span>#${osmColor}</span>
-                <span style="color:var(--border-light);">·</span>
-                <span>${osmShape}</span>
-              </div>
-            </div>
-          </div>
-        </td>`;
+    // ── OsmAnd editable cell ──────────────────────────────────────────────────
+    const tdOsm = document.createElement("td");
 
-    const countCell = `
-        <td style="text-align:right; padding-right:16px;">
-          <span class="count-badge">${count}</span>
-        </td>`;
+    // Live preview bubble
+    const prevBg = document.createElement("div");
+    prevBg.id = `prev-${safeId}`;
+    prevBg.className = `osmand-bg shape-${osm.shape} pickable`;
+    prevBg.style.background = `#${osm.color}`;
+    const prevImg = document.createElement("img");
+    prevImg.id = `prev-img-${safeId}`;
+    prevImg.src = osmandIconUrl(osm.name);
+    prevImg.width = 24; prevImg.height = 24;
+    prevImg.onerror = function(){ this.outerHTML = '<span class="fallback-q">?</span>'; };
+    prevBg.appendChild(prevImg);
 
-    tr.innerHTML = googleCell + arrowCell + osmandCell + countCell;
+    // Name input + reset button
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.className = "osm-name-input";
+    nameInput.value = osm.name;
+
+    const browseBtn = document.createElement("button");
+    browseBtn.className = "osm-browse-btn";
+    browseBtn.title = "Browse icons";
+    browseBtn.textContent = "⊞";
+
+    const resetBtn = document.createElement("button");
+    resetBtn.className = "osm-reset-btn";
+    resetBtn.title = "Reset to default";
+    resetBtn.textContent = "↺";
+
+    const nameRow = document.createElement("div");
+    nameRow.className = "osm-name-row";
+    nameRow.appendChild(nameInput);
+    nameRow.appendChild(browseBtn);
+    nameRow.appendChild(resetBtn);
+
+    // Color picker + hex input
+    const colorPicker = document.createElement("input");
+    colorPicker.type = "color";
+    colorPicker.className = "osm-colorpicker";
+    colorPicker.value = `#${osm.color}`;
+
+    const hexInput = document.createElement("input");
+    hexInput.type = "text";
+    hexInput.className = "osm-hex-input";
+    hexInput.value = osm.color;
+    hexInput.maxLength = 6;
+    hexInput.spellcheck = false;
+
+    const colorRow = document.createElement("div");
+    colorRow.className = "osm-color-row";
+    colorRow.appendChild(colorPicker);
+    colorRow.appendChild(hexInput);
+
+    // Shape buttons
+    const shapeRow = document.createElement("div");
+    shapeRow.className = "osm-shape-row";
+    const shapes = ["circle", "square", "octagon"];
+    const shapeBtns = shapes.map(s => {
+        const b = document.createElement("button");
+        b.className = "osm-shape-btn" + (s === osm.shape ? " active" : "");
+        b.dataset.shape = s;
+        b.textContent = s;
+        shapeRow.appendChild(b);
+        return b;
+    });
+
+    // Controls wrapper
+    const controls = document.createElement("div");
+    controls.className = "osm-controls";
+    controls.appendChild(nameRow);
+    controls.appendChild(colorRow);
+    controls.appendChild(shapeRow);
+
+    // Outer wrap
+    const wrap = document.createElement("div");
+    wrap.className = "osm-edit-wrap";
+    wrap.appendChild(prevBg);
+    wrap.appendChild(controls);
+    tdOsm.appendChild(wrap);
+    tr.appendChild(tdOsm);
+
+    // ── Count cell ────────────────────────────────────────────────────────────
+    const tdCount = document.createElement("td");
+    tdCount.style.cssText = "text-align:right; padding-right:16px;";
+    tdCount.innerHTML = `<span class="count-badge">${count}</span>`;
+    tr.appendChild(tdCount);
+
+    // ── Helper: read current state & push to userOverrides ───────────────────
+    function applyOverride() {
+        const def = getDefaultOsmand(iconId, kmlColor);
+        const cur = {
+            name:  nameInput.value.trim() || def.name,
+            color: hexInput.value,
+            shape: shapeBtns.find(b => b.classList.contains("active"))?.dataset.shape || def.shape
+        };
+        const isDefault = cur.name === def.name && cur.color === def.color && cur.shape === def.shape;
+        if (isDefault) {
+            delete userOverrides[key];
+            tr.classList.remove("overridden");
+        } else {
+            userOverrides[key] = cur;
+            tr.classList.add("overridden");
+        }
+        // update live preview
+        const bg = document.getElementById(`prev-${safeId}`);
+        if (bg) {
+            bg.className = `osmand-bg shape-${cur.shape} pickable`;
+            bg.style.background = `#${cur.color}`;
+            const img = document.getElementById(`prev-img-${safeId}`);
+            if (img) img.src = osmandIconUrl(cur.name);
+        }
+    }
+
+    // ── Event listeners ───────────────────────────────────────────────────────
+    function openPicker() {
+        openIconPicker(nameInput.value.trim(), selectedName => {
+            nameInput.value = selectedName;
+            applyOverride();
+        });
+    }
+    prevBg.addEventListener("click", openPicker);
+    browseBtn.addEventListener("click", openPicker);
+
+    nameInput.addEventListener("input", applyOverride);
+
+    colorPicker.addEventListener("input", () => {
+        const hex = colorPicker.value.slice(1).toLowerCase();
+        hexInput.value = hex;
+        hexInput.classList.remove("invalid");
+        applyOverride();
+    });
+
+    hexInput.addEventListener("input", () => {
+        const val = hexInput.value.replace(/[^0-9a-fA-F]/g, "").slice(0, 6);
+        hexInput.value = val;
+        if (val.length === 6) {
+            colorPicker.value = `#${val}`;
+            hexInput.classList.remove("invalid");
+            applyOverride();
+        } else {
+            hexInput.classList.add("invalid");
+        }
+    });
+
+    shapeBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            shapeBtns.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            applyOverride();
+        });
+    });
+
+    resetBtn.addEventListener("click", () => {
+        const def = getDefaultOsmand(iconId, kmlColor);
+        nameInput.value    = def.name;
+        colorPicker.value  = `#${def.color}`;
+        hexInput.value     = def.color;
+        hexInput.classList.remove("invalid");
+        shapeBtns.forEach(b => b.classList.toggle("active", b.dataset.shape === def.shape));
+        delete userOverrides[key];
+        tr.classList.remove("overridden");
+        applyOverride();
+    });
+
     return tr;
 }
 
@@ -623,17 +1038,12 @@ if(desc) out += "\t<desc>"+desc+"</desc>\n";
                 let styleIcon = styleParts[1];
                 let styleColor = styleParts[2];
 
-                if(!iconDictionary[styleIcon]) styleIcon="unknown";
-
-                let chosenColor =
-                    (iconDictionary[styleIcon][1]===KMLCOLOR)
-                    ? styleColor
-                    : iconDictionary[styleIcon][1];
+                const osm = getOsmand(styleIcon, styleColor);
 
 out += "\t<extensions>\n";
-out += `\t\t<osmand:color>#${chosenColor}</osmand:color>\n`;
-out += `\t\t<osmand:icon>${iconDictionary[styleIcon][0]}</osmand:icon>\n`;
-out += `\t\t<osmand:background>${iconDictionary[styleIcon][2]}</osmand:background>\n`;
+out += `\t\t<osmand:color>#${osm.color}</osmand:color>\n`;
+out += `\t\t<osmand:icon>${osm.name}</osmand:icon>\n`;
+out += `\t\t<osmand:background>${osm.shape}</osmand:background>\n`;
 out += "\t</extensions>\n";
 
 out += "</wpt>\n";
@@ -661,5 +1071,18 @@ function download(name, text){
     document.body.removeChild(a);
 }
 </script>
+
+<!-- ── Icon picker modal ─────────────────────────────────────────────────── -->
+<div id="iconPickerOverlay" class="ip-overlay" onclick="if(event.target===this)closeIconPicker()">
+  <div class="ip-modal">
+    <div class="ip-header">
+      <span class="ip-title">Select OsmAnd icon</span>
+      <input type="text" id="iconPickerSearch" class="ip-search" placeholder="Filter icons…" autocomplete="off">
+      <button class="ip-close" onclick="closeIconPicker()">✕</button>
+    </div>
+    <div class="ip-status" id="iconPickerStatus">Loading icons…</div>
+    <div class="ip-grid" id="iconPickerGrid"></div>
+  </div>
+</div>
 </body>
 </html>
